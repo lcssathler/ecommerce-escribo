@@ -1,6 +1,5 @@
-package ecommerce_escribo.demo.domains;
+package ecommerce_escribo.demo.domain;
 
-import jakarta.annotation.Nonnull;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
