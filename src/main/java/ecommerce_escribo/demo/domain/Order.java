@@ -27,7 +27,7 @@ public class Order {
     private BigDecimal total = BigDecimal.ZERO;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OrderProduct> listProducts;
+    private List<OrderProduct> listProductsToBuy;
 
     @NotBlank(message = "order must have a status")
     @Enumerated(EnumType.STRING)

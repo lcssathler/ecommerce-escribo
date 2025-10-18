@@ -1,9 +1,7 @@
 package ecommerce_escribo.demo.domain;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -22,10 +20,13 @@ public class Product {
 
     @Column
     @NotNull(message = "product must have a price")
+    @NotBlank
+    @DecimalMin(value = "0.0",message = "price of product can't be negative")
     private BigDecimal price;
 
     @Column
-    private int quantity;
+    @Min(value = 0, message = "quantity of product can't be negative")
+    private int quantity = 0;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
