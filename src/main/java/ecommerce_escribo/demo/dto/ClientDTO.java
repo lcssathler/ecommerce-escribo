@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.time.LocalDateTime;
+
 public record ClientDTO(
         Long id,
 
@@ -14,9 +16,12 @@ public record ClientDTO(
 
         @Email(message = "invalid email")
         @NotBlank
-        String email) {
+        String email,
+
+        LocalDateTime createdAt
+) {
 
     public ClientDTO(String name, String email) {
-        this(0L, name, email);
+        this(0L, name, email, LocalDateTime.now());
     }
 }
