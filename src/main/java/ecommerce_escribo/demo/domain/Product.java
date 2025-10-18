@@ -20,7 +20,6 @@ public class Product {
 
     @Column
     @NotNull(message = "product must have a price")
-    @NotBlank
     @DecimalMin(value = "0.0",message = "price of product can't be negative")
     private BigDecimal price;
 
@@ -30,6 +29,10 @@ public class Product {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
+
+
+    public Product() {
+    }
 
     public Product(String name, BigDecimal price, int quantity) {
         this.name = name;

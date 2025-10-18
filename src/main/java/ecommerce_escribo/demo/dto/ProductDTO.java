@@ -15,7 +15,6 @@ public record ProductDTO(
         String name,
 
         @NotNull
-        @NotBlank
         @DecimalMin(value = "0.0",message = "price of product can't be negative")
         BigDecimal price,
 
