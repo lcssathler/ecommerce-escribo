@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 public record ProductDTO(
         Long id,
@@ -19,10 +20,12 @@ public record ProductDTO(
         BigDecimal price,
 
         @Min(value = 0, message = "quantity of product can't be negative")
-        int quantity
+        int quantity,
+
+        LocalDateTime createdAt
         ) {
 
     public ProductDTO(String name, BigDecimal price, int quantity) {
-        this(0L, name, price, quantity);
+        this(0L, name, price, quantity, LocalDateTime.now());
     }
 }
