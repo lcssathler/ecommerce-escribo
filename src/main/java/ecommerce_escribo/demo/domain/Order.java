@@ -35,4 +35,44 @@ public class Order {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    public Long getId() {
+        return id;
+    }
+
+    public Client getClient() {
+        return client;
+    }
+
+    public BigDecimal getTotal() {
+        return total;
+    }
+
+    public List<OrderProduct> getListProductsToBuy() {
+        return listProductsToBuy;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setClient(Client client) {
+        this.client = client;
+    }
+
+    public void setTotal(BigDecimal total) {
+        this.total = total;
+    }
+
+    public void setListProductsToBuy(List<OrderProduct> listProductsToBuy) {
+        this.listProductsToBuy = listProductsToBuy;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
 }
