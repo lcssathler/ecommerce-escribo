@@ -41,6 +41,24 @@ public class OrderProduct {
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    public OrderProduct() {
+    }
+
+    public OrderProduct(Product product, int quantity) {
+        this.product = product;
+        this.quantity = quantity;
+        this.unityPrice = product.getPrice();
+        this.subtotal = product.getPrice().multiply(BigDecimal.valueOf(quantity));
+    }
+
+    public OrderProduct(Order order, Product product, int quantity, BigDecimal unityPrice, BigDecimal subtotal) {
+        this.order = order;
+        this.product = product;
+        this.quantity = quantity;
+        this.unityPrice = unityPrice;
+        this.subtotal = subtotal;
+    }
+
     public Long getId() {
         return id;
     }
@@ -88,4 +106,6 @@ public class OrderProduct {
     public void setSubtotal(BigDecimal subtotal) {
         this.subtotal = subtotal;
     }
+
+
 }

@@ -27,7 +27,7 @@ public class OrderMapper {
                 orderItemsDTO,
                 entity.getTotal(),
                 entity.getCreatedAt(),
-                entity.getStatus()
+                entity.getStatus().toString()
                 );
     }
 }
