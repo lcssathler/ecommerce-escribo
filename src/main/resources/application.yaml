@@ -1,0 +1,6 @@
+server:
+  port: 8080
+
+supabase:
+  url: https://fxhnlcwxhuujafyzcfqs.supabase.co
+  anon-key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4aG5sY3d4aHV1amFmeXpjZnFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2NjU3NTUsImV4cCI6MjA3NjI0MTc1NX0.qrEn6-GYTbpcdFFFguvUKLvKM8VNB9cETjzrwcjxJrg

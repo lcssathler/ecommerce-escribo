@@ -12,6 +12,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/clients")
 public class ClientController {
+
     private final ClientService service;
 
     public ClientController(ClientService service) {
@@ -19,29 +20,48 @@ public class ClientController {
     }
 
     @PostMapping
-    public ResponseEntity<ClientDTO> create(@Valid @RequestBody ClientDTO dto) {
-        ClientDTO created = service.create(dto);
+    public ResponseEntity<ClientDTO> create(
+            @Valid @RequestBody ClientDTO dto,
+            @RequestHeader("Authorization") String authHeader) {
+
+        ClientDTO created = service.create(dto, authHeader);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @GetMapping
-    public ResponseEntity<List<ClientDTO>> findAll() {
-        return ResponseEntity.ok(service.findAll());
+    public ResponseEntity<List<ClientDTO>> findAll(
+            @RequestHeader("Authorization") String authorizationHeader
+    ) {
+        String token = authorizationHeader.replace("Bearer ", "");
+        return ResponseEntity.ok(service.findAll(token));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ClientDTO> findById(@PathVariable Long id) {
-        return ResponseEntity.ok(service.findById(id));
+    public ResponseEntity<ClientDTO> findById(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @PathVariable Long id
+    ) {
+        String token = authorizationHeader.replace("Bearer ", "");
+        return ResponseEntity.ok(service.findById(id, token));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ClientDTO> update(@PathVariable Long id, @Valid @RequestBody ClientDTO dto) {
-        return ResponseEntity.ok(service.update(id, dto));
+    public ResponseEntity<ClientDTO> update(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @PathVariable Long id,
+            @RequestBody @Valid ClientDTO dto
+    ) {
+        String token = authorizationHeader.replace("Bearer ", "");
+        return ResponseEntity.ok(service.update(id, dto, token));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        service.delete(id);
+    public ResponseEntity<Void> delete(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @PathVariable Long id
+    ) {
+        String token = authorizationHeader.replace("Bearer ", "");
+        service.delete(id, token);
         return ResponseEntity.noContent().build();
     }
 }
