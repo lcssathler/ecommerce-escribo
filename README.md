@@ -1,118 +1,206 @@
-# E-commerce Escribo
+# E-commerce com Supabase e Spring Boot
 
-E-commerce desenvolvida com **Java 21 + Spring Boot 3.5**, integrada ao **Supabase** para armazenamento de dados, autenticação e automação de processos através de **Edge Functions** e **triggers SQL**.
-
-O sistema permite gerenciar clientes, produtos e pedidos, realizando cálculos automáticos de subtotal e total, além de enviar e-mails de confirmação e gerar relatórios CSV de pedidos.
+Teste técnico Supabase + AI
 
 ---
 
-## 🚀 Tecnologias Utilizadas
+## Tecnologias Utilizadas
 
-- **Java 21**
-- **Spring Boot 3.5**
-- **WebFlux (WebClient)**
-- **PostgreSQL (via Supabase)**
-- **Supabase Edge Functions (automação e notificações)**
-- **Triggers e Functions SQL**
-- **Views para consultas otimizadas**
-
----
-
-## 🧩 Modelagem do Banco de Dados
-
-O banco de dados foi modelado no **Supabase (PostgreSQL)** com as seguintes tabelas principais:
-
-### **1. client**
-Contém os dados dos clientes registrados, vinculados a um usuário autenticado do Supabase (`auth.users`).
-
-| Coluna     | Tipo      | Descrição |
-|-------------|-----------|------------|
-| id          | bigint    | Identificador único |
-| name        | varchar   | Nome do cliente |
-| email       | varchar   | Email do cliente |
-| user_id     | uuid      | ID do usuário Supabase |
-| created_at  | timestamp | Data de criação |
+- **Java 17**
+- **Spring Boot 3.4.4**
+- **JPA / Hibernate**
+- **Supabase (PostgreSQL + Auth + Edge Functions)**
+- **Postman**
+- **Resend API**
+- **Deno + Supabase Edge Functions**
 
 ---
 
-### **2. product**
-Representa os produtos disponíveis no estoque.
+## Estrutura do Banco de Dados
 
-| Coluna     | Tipo      | Descrição |
-|-------------|-----------|------------|
-| id          | bigint    | Identificador único |
-| name        | varchar   | Nome do produto |
-| price       | numeric   | Valor unitário |
-| quantity    | integer   | Quantidade em estoque |
-| created_at  | timestamp | Data de criação |
+O banco de dados é hospedado no **Supabase**, que utiliza **PostgreSQL**.  
+As tabelas principais são:
 
----
+### **Tabelas**
 
-### **3. orders**
-Tabela que representa os pedidos de cada cliente.
+| Tabela | Descrição |
+|--------|------------|
+| **product** | Contém as informações dos produtos (nome, preço, estoque, descrição). |
+| **order** | Representa um pedido realizado por um usuário. |
+| **order_product** | Tabela intermediária que representa o relacionamento N:N entre `order` e `product`. |
+| **user** | Usuários autenticados no Supabase (armazenados pelo módulo de Auth). |
 
-| Coluna     | Tipo      | Descrição |
-|-------------|-----------|------------|
-| id          | bigint    | Identificador único |
-| client_id   | bigint    | FK para `client` |
-| total       | numeric   | Valor total do pedido |
-| status      | enum      | `PENDING`, `APPROVED`, `CANCELLED` |
-| created_at  | timestamp | Data de criação |
+### **Relacionamentos**
 
----
-
-### **4. order_product**
-Tabela intermediária que representa a **relação entre pedidos e produtos**.
-
-| Coluna       | Tipo      | Descrição |
-|---------------|-----------|------------|
-| id            | bigint    | Identificador único |
-| orders_id     | bigint    | FK para `orders` |
-| product_id    | bigint    | FK para `product` |
-| unity_price   | numeric   | Valor unitário no momento da compra |
-| quantity      | integer   | Quantidade comprada |
-| subtotal      | numeric   | `quantity * unity_price` |
-| created_at    | timestamp | Data de criação |
-
-> 💡 Essa tabela é o elo entre `orders` e `product`.  
-> Cada linha indica quantos produtos foram comprados em um pedido e a que preço.
+- Um **Order** pode conter **vários Products**.  
+- Um **Product** pode estar em **vários Orders**.  
+- Essa relação é implementada pela tabela intermediária **OrderProduct**, que contém:
+  - `order_id` (FK para `order`)
+  - `product_id` (FK para `product`)
+  - `quantity` e `total_price`
 
 ---
 
-## Cálculos Automáticos (Functions e Triggers)
+## ⚙️ Backend com Spring Boot
 
-O banco conta com **funções automáticas em PostgreSQL** para:
+O backend foi desenvolvido em **Spring Boot**, utilizando o **JPA** para mapear as entidades do banco e interagir com o Supabase. 
 
-- Calcular automaticamente o **subtotal** em `order_product` ao inserir ou atualizar registros;
-- Atualizar o **total do pedido** na tabela `orders`;
-- Gerenciar automaticamente o **estoque** (`product.quantity`) quando um pedido é criado, cancelado ou excluído.
+### **Fluxo de uma Requisição REST**
 
-Essas automações são implementadas via **triggers**, garantindo consistência e eliminando a necessidade de cálculos manuais no backend.
+1. O **cliente** (Postman, frontend, etc.) envia uma requisição HTTP para o backend Java.  
+2. O **Controller** recebe a requisição e valida os headers (Authorization e API Key).  
+3. O **Service** utiliza o **JPA** para persistir ou consultar dados no Supabase.  
+4. O **Repository** interage com o banco via **Supabase JDBC** (PostgreSQL).  
+5. Em alguns casos, o backend também faz chamadas diretas à **API REST do Supabase** usando o token do usuário autenticado.
 
 ---
+
+## Autenticação
+
+O fluxo de autenticação é totalmente integrado ao **Supabase Auth**.
+
+1. O usuário é criado e autenticado diretamente no **Supabase**, gerando um **UUID único**.  
+2. Com esse UUID, o backend faz uma **requisição POST** para a **API de autenticação do Supabase** (`/auth/v1/token`) para obter um **access token (JWT)**.  
+3. Esse token é armazenado temporariamente no backend e usado para autenticar requisições futuras. Somente tokens validados podem fazer as requisições.
+
+---
+
+## 🧾 Uso do Token de Acesso
+
+Para enviar requisições REST diretamente à API do Supabase, é necessário incluir no **header**:
+
+```http
+Authorization: Bearer <ACCESS_TOKEN>
+apikey: <SUPABASE_ANON_KEY>
+Content-Type: application/json
+```
+Esses headers são necessários tanto no Postman quanto nas chamadas internas do backend ao Supabase.
+
+Exemplo de requisição via Postman para inserir um produto:
+
+```
+POST https://<your-project>.supabase.co/rest/v1/product
+Headers:
+  Authorization: Bearer eyJhbGciOi...
+  apikey: SUPABASE_ANON_KEY
+Body:
+  {
+    "name": "Notebook Dell",
+    "price": 4999.90,
+    "stock": 5
+  }
+```
+
+## Modificações no Backend
+
+O backend foi adaptado para:
+
+1. Receber requisições REST com os headers de autenticação (Authorization e apikey);
+2. Encaminhar essas requisições para a API REST do Supabase, preservando os headers originais;
+3. Interagir com o banco via JPA para consultas e operações locais, mantendo a consistência dos dados.
+
+   
+## Row Level Security (RLS)
+
+As políticas RLS garantem que cada usuário veja apenas seus próprios dados:
+
+```sql
+create policy "Client can view your own profile"
+on public.client
+for select
+to authenticated
+using (auth.uid() = user_id);
+
+create policy "Client can insert your own profile"
+on public.client
+for insert
+to authenticated
+with check (auth.uid() = user_id);
+```
+<img width="1087" height="250" alt="image" src="https://github.com/user-attachments/assets/1222ad4a-5fbd-46ad-bb30-7105bf23c650" />
+
+
+## Funções e Triggers
+
+O banco possui funções e triggers criadas para automatizar processos:
+
+- Atualizar totais automaticamente quando um item é inserido na tabela order_product;
+- Recalcular o valor total do pedido na tabela order;
+- Devolver produtos ao estoque quando um item é removido;
+- Auditar ações e manter integridade entre as tabelas.
+<img width="1115" height="455" alt="image" src="https://github.com/user-attachments/assets/f191346d-31f5-4bca-912f-2cf7eecb5b90" />
+
+## Exemplo de uma função:
+<img width="447" height="370" alt="image" src="https://github.com/user-attachments/assets/3eb82960-7372-4ca1-b9ce-33e9f5c59aff" />
 
 ## Views Criadas
 
-Para otimizar consultas e facilitar integrações, foram criadas views no Supabase, como:
+| Visão | Descrição |
+|--------|------------|
+| **view_order_details** | Mostra detalhes completos de cada pedido, com cliente, produtos, subtotal e total calculado.. |
+| **view_client_summary** | Mostra um resumo dos clientes com total gasto e número de pedidos. |
+| **view_product_stock** | Mostra os produtos com a quantidade em estoque e quantos foram vendidos. |
+| **view_order_summary** | Mostra os totais de cada pedido, ideal pra dashboards. |
 
-- **view_order_details** → Lista todos os pedidos com seus produtos e valores agregados;  
-- **view_client_orders** → Lista os pedidos agrupados por cliente;  
-- **view_stock_summary** → Mostra o estoque atual e o total de produtos vendidos.
+## Edge Functions — Envio de E-mail Automático
 
-Essas views permitem buscas rápidas sem necessidade de múltiplos `JOINs` no backend.
+Foi criada uma Edge Function no Supabase para enviar e-mails de confirmação de compra.
 
----
+Fluxo:
 
-## 🌐 API REST — Backend (Spring Boot)
+- Um novo registro é inserido na tabela order_product.
+- O trigger do banco chama a Edge Function via pg_net.http_post.
+- A Edge Function envia um e-mail para o cliente com os detalhes da compra, utilizando a API do Resend.
 
-O backend expõe endpoints RESTful que se comunicam com o banco Supabase via **Spring WebClient**.  
-As chamadas seguem o padrão:
+Exemplo simplificado da função:
 
-```java
-webClient.get()
-    .uri(supabaseUrl + "/rest/v1/client?select=*")
-    .header("apikey", supabaseAnonKey)
-    .header("Authorization", "Bearer " + token)
-    .retrieve()
-    .bodyToMono(ClientDTO[].class)
-    .block();
+```js
+const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
+
+const handler = async (_request: Request): Promise<Response> => {
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${RESEND_API_KEY}`,
+    },
+    body: JSON.stringify({
+      from: 'onboarding@resend.dev',
+      to: 'delivered@resend.dev',
+      subject: 'hello world',
+      html: '<strong>it works!</strong>',
+    }),
+  })
+
+  const data = await res.json()
+
+  return new Response(JSON.stringify(data), {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+Deno.serve(handler)
+```
+
+## Testando com Postman
+
+Exemplo de requisição para o backend Java:
+
+```http
+POST http://localhost:8080/orders
+Headers:
+  Authorization: Bearer <ACCESS_TOKEN>
+  apikey: <SUPABASE_ANON_KEY>
+  Content-Type: application/json
+Body:
+  {
+    "userId": "UUID_DO_USUARIO",
+    "products": [
+      { "productId": 1, "quantity": 2 },
+      { "productId": 3, "quantity": 1 }
+    ]
+  }
+```
