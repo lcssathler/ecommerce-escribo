@@ -185,6 +185,92 @@ const handler = async (_request: Request): Promise<Response> => {
 Deno.serve(handler)
 ```
 
+# 🧾 Supabase Edge Function — `export-order-csv`
+
+## 📘 Descrição
+
+A função **`export-order-csv`** foi criada para exportar os dados completos de um **pedido de cliente** em formato **CSV**, integrando-se diretamente ao banco de dados do Supabase.
+
+Ela é executada automaticamente a partir de chamadas HTTP (via **Edge Function**) e retorna o conteúdo do pedido — incluindo informações do cliente, produtos, quantidades, preços e totais — de forma estruturada e pronta para download.
+
+
+---
+
+## Estrutura da Função
+
+```typescript
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const supabase = createClient(
+  Deno.env.get("SUPABASE_URL") ?? "",
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+);
+
+serve(async (req) => {
+  try {
+    const { order_id } = await req.json();
+    if (!order_id) {
+      return new Response(JSON.stringify({ error: "order_id é obrigatório" }), { status: 400 });
+    }
+
+    const { data, error } = await supabase
+      .from("orders")
+      .select(`
+        id,
+        created_at,
+        total,
+        client:client_id(name, email),
+        order_product:order_product(
+          quantity,
+          unity_price,
+          subtotal,
+          product:product_id(name, price)
+        )
+      `)
+      .eq("id", order_id)
+      .single();
+
+    if (error || !data) {
+      console.error("Erro ao buscar pedido:", error);
+      return new Response(JSON.stringify({ error: "Pedido não encontrado" }), { status: 404 });
+    }
+
+    const header = ["Produto", "Quantidade", "Preço Unitário", "Subtotal"];
+    const rows = data.order_product.map((item: any) => [
+      item.product.name,
+      item.quantity,
+      item.unity_price,
+      item.subtotal,
+    ]);
+
+    const metaInfo = [
+      ["Cliente", data.client.name],
+      ["E-mail", data.client.email],
+      ["Pedido", data.id],
+      ["Data", new Date(data.created_at).toLocaleString()],
+      ["Total", data.total],
+      [],
+      header,
+      ...rows,
+    ];
+
+    const csvContent = metaInfo.map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
+
+    return new Response(csvContent, {
+      headers: {
+        "Content-Type": "text/csv",
+        "Content-Disposition": `attachment; filename=pedido_${data.id}.csv`,
+      },
+      status: 200,
+    });
+  } catch (err) {
+    console.error("Erro ao exportar CSV:", err);
+    return new Response(JSON.stringify({ error: "Erro interno ao exportar CSV" }), { status: 500 });
+  }
+});
+```
+
 ## Testando com Postman
 
 Exemplo de requisição para o backend Java:
